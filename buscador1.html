@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoSec OSINT & Policy Search Studio</title>
+    <!-- Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#1e293b', 900: '#0f172a' },
+                        military: { 600: '#4d5d53', 700: '#3a473e' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+
+    <!-- Header / Navbar -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid me-2 fa-shield-halved text-emerald-400 text-2xl"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide text-white">GeoSec OSINT & Policy Search Studio</h1>
+                    <p class="text-xs text-slate-400">Buscador Booleano y Asistente de Investigación para Acceso Abierto</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 text-xs">
+                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                    <i class="fa-solid fa-lock-open me-1"></i> Solo Fuentes de Acceso Abierto
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Columna Izquierda: Panel de Búsqueda Booleana -->
+        <section class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-sm space-y-6">
+            
+            <div class="border-b border-slate-700 pb-3">
+                <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> Constructor de Búsqueda Booleana
+                </h2>
+                <p class="text-xs text-slate-400 mt-1">Combina términos y operadores para filtrar documentos y reportes libres de paywall.</p>
+            </div>
+
+            <!-- Selección de Eje Temático Rápido -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Ejes Temáticos Predefinidos</label>
+                <div class="flex flex-wrap gap-2" id="topic-chips">
+                    <button onclick="setTopic('Drones OR UAS OR UAV OR Ciberseguridad')" class="chip-btn bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Drones & Ciberseguridad</button>
+                    <button onclick="setTopic('Armas Autónomas OR LAWS OR IA Militar')" class="chip-btn bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Armas Autónomas</button>
+                    <button onclick="setTopic('Geopolítica OR Seguridad Nacional OR Ciencias Políticas')" class="chip-btn bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Geopolítica & Seguridad</button>
+                    <button onclick="setTopic('Políticas Públicas OR Economía')" class="chip-btn bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">Políticas Públicas & Economía</button>
+                </div>
+            </div>
+
+            <!-- Campos de Operadores Booleanos -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Términos Obligatorios <span class="text-emerald-400 font-mono">(AND)</span></label>
+                    <input type="text" id="terms-must" oninput="buildQuery()" placeholder="ej. geopolítica 'seguridad nacional'" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Cualquiera de estos Términos <span class="text-amber-400 font-mono">(OR)</span></label>
+                    <input type="text" id="terms-any" oninput="buildQuery()" placeholder="ej. drones UAS UAV 'armas autónomas'" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Excluir Términos <span class="text-rose-400 font-mono">(NOT / -)</span></label>
+                    <input type="text" id="terms-none" oninput="buildQuery()" placeholder="ej. comercial juguetes aficionado" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <!-- Filtros de Dominio y Formato -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Filtros de Acceso Abierto (.org, .edu, .gov, PDF)</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <label class="flex items-center space-x-2 bg-slate-900 p-2.5 rounded-lg border border-slate-700 cursor-pointer hover:border-slate-600">
+                        <input type="checkbox" id="site-org" onchange="buildQuery()" checked class="rounded bg-slate-800 border-slate-600 text-emerald-500 focus:ring-0">
+                        <span>site:.org (Think Tanks)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-slate-900 p-2.5 rounded-lg border border-slate-700 cursor-pointer hover:border-slate-600">
+                        <input type="checkbox" id="site-edu" onchange="buildQuery()" checked class="rounded bg-slate-800 border-slate-600 text-emerald-500 focus:ring-0">
+                        <span>site:.edu (Academia)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-slate-900 p-2.5 rounded-lg border border-slate-700 cursor-pointer hover:border-slate-600">
+                        <input type="checkbox" id="site-gov" onchange="buildQuery()" checked class="rounded bg-slate-800 border-slate-600 text-emerald-500 focus:ring-0">
+                        <span>site:.gov (Gobierno)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-slate-900 p-2.5 rounded-lg border border-slate-700 cursor-pointer hover:border-slate-600">
+                        <input type="checkbox" id="file-pdf" onchange="buildQuery()" checked class="rounded bg-slate-800 border-slate-600 text-emerald-500 focus:ring-0">
+                        <span>filetype:pdf</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Resultado de la Cadena Booleana -->
+            <div class="space-y-2">
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Cadena Booleana Resultante</label>
+                <div class="relative">
+                    <textarea id="final-query" readonly rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm font-mono text-emerald-300 focus:outline-none resize-none"></textarea>
+                    <button onclick="copyToClipboard('final-query')" class="absolute top-2 right-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded border border-slate-600 transition">
+                        <i class="fa-regular fa-copy"></i> Copiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botones de Ejecución de Búsqueda -->
+            <div class="flex flex-wrap gap-3 pt-2">
+                <button onclick="searchGoogle()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-google"></i> Buscar en Google Web
+                </button>
+                <button onclick="searchScholar()" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-graduation-cap"></i> Google Académico
+                </button>
+                <button onclick="searchDuckDuckGo()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass"></i> DuckDuckGo
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Columna Derecha: Generador de Prompt & Repositorios recomendados -->
+        <section class="space-y-6">
+
+            <!-- Generador de Prompt Simplificado para IA -->
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-sm space-y-4">
+                <div class="border-b border-slate-700 pb-2 flex justify-between items-center">
+                    <h2 class="text-sm font-semibold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-robot"></i> Generador de Prompt Simplificado
+                    </h2>
+                    <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded">Para ChatGPT / Gemini</span>
+                </div>
+                
+                <p class="text-xs text-slate-400">Copia este prompt optimizado para ejecutar la investigación directamente en cualquier modelo de IA:</p>
+
+                <div class="relative">
+                    <textarea id="ai-prompt" readonly rows="8" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs font-mono text-slate-200 focus:outline-none resize-none leading-relaxed"></textarea>
+                    <button onclick="copyToClipboard('ai-prompt')" class="absolute top-2 right-2 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs px-2.5 py-1 rounded border border-slate-600 transition">
+                        <i class="fa-regular fa-copy"></i> Copiar Prompt
+                    </button>
+                </div>
+            </div>
+
+            <!-- Repositorios de Acceso Abierto Recomendados -->
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-sm space-y-3">
+                <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-database text-sky-400"></i> Repositorios Recomendados (Open Access)
+                </h3>
+                <ul class="text-xs space-y-2 text-slate-300">
+                    <li class="flex justify-between items-center bg-slate-900 p-2 rounded border border-slate-700">
+                        <span><strong>SIPRI:</strong> Peace Research & Armaments</span>
+                        <a href="https://www.sipri.org/databases" target="_blank" class="text-sky-400 hover:underline">Ir <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+                    </li>
+                    <li class="flex justify-between items-center bg-slate-900 p-2 rounded border border-slate-700">
+                        <span><strong>RAND Corporation:</strong> Research Reports</span>
+                        <a href="https://www.rand.org/pubs.html" target="_blank" class="text-sky-400 hover:underline">Ir <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+                    </li>
+                    <li class="flex justify-between items-center bg-slate-900 p-2 rounded border border-slate-700">
+                        <span><strong>UN Digital Library:</strong> Documentos ONU</span>
+                        <a href="https://digitallibrary.un.org/" target="_blank" class="text-sky-400 hover:underline">Ir <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+                    </li>
+                    <li class="flex justify-between items-center bg-slate-900 p-2 rounded border border-slate-700">
+                        <span><strong>arXiv CS / Robotics:</strong> Preprints de IA</span>
+                        <a href="https://arxiv.org/" target="_blank" class="text-sky-400 hover:underline">Ir <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+                    </li>
+                </ul>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Script de Lógica -->
+    <script>
+        function setTopic(topicString) {
+            document.getElementById('terms-must').value = topicString;
+            buildQuery();
+        }
+
+        function buildQuery() {
+            const must = document.getElementById('terms-must').value.trim();
+            const any = document.getElementById('terms-any').value.trim();
+            const none = document.getElementById('terms-none').value.trim();
+
+            const siteOrg = document.getElementById('site-org').checked;
+            const siteEdu = document.getElementById('site-edu').checked;
+            const siteGov = document.getElementById('site-gov').checked;
+            const filePdf = document.getElementById('file-pdf').checked;
+
+            let queryParts = [];
+
+            if (must) queryParts.push(`(${must})`);
+            
+            if (any) {
+                const anyFormatted = any.split(' ').map(term => term.trim()).filter(Boolean).join(' OR ');
+                if (anyFormatted) queryParts.push(`(${anyFormatted})`);
+            }
+
+            if (none) {
+                const noneFormatted = none.split(' ').map(term => `-${term.trim()}`).filter(Boolean).join(' ');
+                if (noneFormatted) queryParts.push(noneFormatted);
+            }
+
+            // Sitios
+            let sites = [];
+            if (siteOrg) sites.push('site:.org');
+            if (siteEdu) sites.push('site:.edu');
+            if (siteGov) sites.push('site:.gov');
+
+            if (sites.length > 0) {
+                queryParts.push(`(${sites.join(' OR ')})`);
+            }
+
+            if (filePdf) {
+                queryParts.push('filetype:pdf');
+            }
+
+            const finalQueryStr = queryParts.join(' ');
+            document.getElementById('final-query').value = finalQueryStr;
+
+            updateAiPrompt(must || any || 'temas de geopolítica, seguridad y tecnología');
+        }
+
+        function updateAiPrompt(topic) {
+            const promptText = `Actúa como un Analista de Inteligencia y Políticas Públicas.
+
+Tema de investigación: ${topic}
+
+Instrucciones:
+1. Filtro de Fuentes: Utiliza únicamente fuentes confiables de acceso abierto (Open Access), repositorios académicos (.edu), informes de Think Tanks (.org) o documentos gubernamentales (.gov / ONU). Excluye blogs de opinión y noticias con paywall.
+2. Estructura del Análisis:
+   - Resumen Ejecutivo (3 puntos clave).
+   - Análisis Estratégico y de Impacto.
+   - Desafíos Regulatorios y Tecnológicos.
+   - Fuentes / Instituciones Recomendadas para profundizar.`;
+
+            document.getElementById('ai-prompt').value = promptText;
+        }
+
+        function searchGoogle() {
+            const query = encodeURIComponent(document.getElementById('final-query').value);
+            if(query) window.open(`https://www.google.com/search?q=${query}`, '_blank');
+        }
+
+        function searchScholar() {
+            const query = encodeURIComponent(document.getElementById('final-query').value);
+            if(query) window.open(`https://scholar.google.com/scholar?q=${query}`, '_blank');
+        }
+
+        function searchDuckDuckGo() {
+            const query = encodeURIComponent(document.getElementById('final-query').value);
+            if(query) window.open(`https://duckduckgo.com/?q=${query}`, '_blank');
+        }
+
+        function copyToClipboard(elementId) {
+            const copyText = document.getElementById(elementId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            alert("¡Copiado al portapapeles!");
+        }
+
+        // Inicializar al cargar
+        window.onload = function() {
+            setTopic('Drones OR UAS OR Ciberseguridad OR "Armas Autónomas"');
+        };
+    </script>
+</body>
+</html>
